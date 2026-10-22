@@ -131,5 +131,87 @@ namespace ReceptekApi.Controllers
 
             return "A hozzávaló törölve.";
         }
+        [HttpGet("szakacs/{id}")]
+        public object? SzakacsAdatai(int id)
+        {
+            kapcsolat.Open();
+            MySqlCommand parancs = new MySqlCommand("SELECT name, email FROM szakacs WHERE id = @id", kapcsolat);
+            parancs.Parameters.AddWithValue("@id", id);
+            MySqlDataReader olvaso = parancs.ExecuteReader();
+
+            if (!olvaso.Read())
+            {
+                olvaso.Close();
+                kapcsolat.Close();
+                return null;
+            }
+
+            string nev = olvaso.GetString("name");
+            string email = olvaso.GetString("email");
+
+            olvaso.Close();
+            kapcsolat.Close();
+            return new { nev = nev, email = email };
+        }
+
+        [HttpGet("szakacs/{id}/hozzavalok")]
+        public object? SzakacsHozzavaloi(int id)
+        {
+            string nev = "";
+            bool vanSzakacs = false;
+            List<object> hozzavalok = new List<object>();
+
+            kapcsolat.Open();
+            MySqlCommand parancs = new MySqlCommand(
+                "SELECT szakacs.name, hozzavalo.ingredientName, hozzavalo.quantity " +
+                "FROM szakacs LEFT JOIN hozzavalo ON hozzavalo.szakacsId = szakacs.id " +
+                "WHERE szakacs.id = @id", kapcsolat);
+            parancs.Parameters.AddWithValue("@id", id);
+            MySqlDataReader olvaso = parancs.ExecuteReader();
+
+            while (olvaso.Read())
+            {
+                vanSzakacs = true;
+                nev = olvaso.GetString("name");
+
+                if (!olvaso.IsDBNull(olvaso.GetOrdinal("ingredientName")))
+                {
+                    string hozzavaloNev = olvaso.GetString("ingredientName");
+                    string mennyiseg = olvaso.GetString("quantity");
+                    hozzavalok.Add(new { hozzavaloNev = hozzavaloNev, mennyiseg = mennyiseg });
+                }
+            }
+
+            olvaso.Close();
+            kapcsolat.Close();
+
+            if (!vanSzakacs)
+            {
+                return null;
+            }
+
+            return new { szakacsNev = nev, hozzavalok = hozzavalok };
+        }
+
+        [HttpGet("szamlalas")]
+        public int OsszesHozzavaloSzama()
+        {
+            kapcsolat.Open();
+            MySqlCommand parancs = new MySqlCommand("SELECT COUNT(*) FROM hozzavalo", kapcsolat);
+            int darab = Convert.ToInt32(parancs.ExecuteScalar());
+            kapcsolat.Close();
+            return darab;
+        }
+
+        [HttpGet("szakacs/{id}/szamlalas")]
+        public int SzakacsHozzavaloinakSzama(int id)
+        {
+            kapcsolat.Open();
+            MySqlCommand parancs = new MySqlCommand("SELECT COUNT(*) FROM hozzavalo WHERE szakacsId = @id", kapcsolat);
+            parancs.Parameters.AddWithValue("@id", id);
+            int darab = Convert.ToInt32(parancs.ExecuteScalar());
+            kapcsolat.Close();
+            return darab;
+        }
     }
 }

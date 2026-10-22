@@ -1,3 +1,4 @@
+using Scalar.AspNetCore;
 
 namespace ReceptekApi
 {
@@ -19,6 +20,7 @@ namespace ReceptekApi
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
             }
 
             app.UseHttpsRedirection();

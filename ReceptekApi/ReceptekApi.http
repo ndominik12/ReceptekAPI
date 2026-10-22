@@ -1,0 +1,6 @@
+@ReceptekApi_HostAddress = http://localhost:5152
+
+GET {{ReceptekApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
